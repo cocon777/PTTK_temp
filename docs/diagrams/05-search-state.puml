@@ -1,0 +1,45 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Trạng thái giao diện — tìm kiếm đã gộp
+
+[*] --> Home
+state "CustomerMainUI7.jsp" as Home
+state "SearchMovieUI7.jsp" as Search {
+  state "Chưa tìm" as Initial
+  state "Thông báo kiểm tra từ khóa" as Invalid
+  state "Danh sách phim" as Results
+  state "Không tìm thấy phim" as Empty
+  [*] --> Initial
+  Initial --> Invalid : tìm rỗng / quá 200 ký tự
+  Initial --> Results : tìm hợp lệ, có phim
+  Initial --> Empty : tìm hợp lệ, không có phim
+  Invalid --> Results : tìm lại, có phim
+  Invalid --> Empty : tìm lại, không có phim
+  Empty --> Results : đổi từ khóa, có phim
+  Results --> Results : tìm lại
+  Results --> Empty : tìm lại, không có phim
+  Results --> Invalid : từ khóa không hợp lệ
+  Empty --> Invalid : từ khóa không hợp lệ
+}
+Home --> Search : GET /searchMovie
+state "MovieDetailUI7.jsp" as Detail
+Results --> Detail : GET /movieDetail?idMovie&keyword
+Detail --> Results : Quay lại (GET keyword cũ)
+Detail --> Search : mã phim không hợp lệ / không tồn tại
+Search --> Home : Về trang chủ
+
+@enduml

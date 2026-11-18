@@ -1,0 +1,57 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Hoạt động — thống kê, phân quyền và giữ kết quả
+
+start
+:GET trang quản lý / endpoint thống kê;
+if (Đã đăng nhập?) then (không)
+  :AuthFilter7 lưu afterLogin;\nredirect /login;
+  stop
+elseif (role = MANAGER?) then (không)
+  :HTTP 403; Error.jsp;
+  stop
+endif
+:ManagerMainUI7.jsp -> SelectStatisticUI7.jsp;
+:GET /statOpen -> openPage();\nxóa listStat, criteria, sortOrder khỏi session;\nngày đầu tháng -> hôm nay;
+repeat
+  :CustomerRevenueStatUI7.jsp hiển thị\nngày chọn và kết quả (nếu có);
+  :Manager chọn thao tác;
+  if (Xem thống kê?) then (có)
+    :POST /statView + csrfToken;
+    if (CSRF hợp lệ?) then (không)
+      :HTTP 403;
+      stop
+    endif
+    if (Ngày hợp lệ, end >= start?) then (không)
+      :message; forward cùng JSP;\nkhông truy vấn thống kê;
+    else (có)
+:viewStat() -> parseDate(dd/MM/yyyy);\ngetCustomerRevenueStat(criteria);\ntruy vấn [start 00:00, end+1 00:00);\ngộp khách vãng lai, tính tỷ trọng;
+      :session listStat, criteria, sortOrder=desc;\nshowList() tính tổng và forward cùng JSP;
+    endif
+  elseif (Sắp xếp doanh thu?) then (có)
+    :GET /statSort -> sortStat();\nđảo asc/desc, sortByRevenue;\ngiữ khách vãng lai cuối danh sách;\nshowList();
+  else (Xem giao dịch)
+    :Nhấn dòng khách hàng có tài khoản;
+    :GET /customerTransaction\n?idCustomer&startDate&endDate&back=/statShow;
+    :readCustomerStat(); getCustomerInfo();\ngetTransactionsByCustomer(); tính tổng;
+    :CustomerTransactionUI7.jsp;
+    :Quay lại GET /statShow -> showList();
+  endif
+repeat while (Tiếp tục xem?) is (có) not (không)
+stop
+
+@enduml

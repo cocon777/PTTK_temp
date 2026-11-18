@@ -1,0 +1,55 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Use case — phạm vi đã cài đặt
+
+left to right direction
+actor "Khách truy cập" as Guest
+actor "Người dùng có tài khoản" as User
+actor "Khách hàng" as Customer
+actor "Nhân viên bán hàng" as Sales
+actor "Nhân viên quản lý" as Manager
+User <|-- Customer
+User <|-- Sales
+User <|-- Manager
+rectangle CineMan7 {
+  usecase RegisterAccount7
+  usecase Login7
+  usecase Logout7
+  usecase SearchMovie7
+  usecase EnterKeyword7
+  usecase ViewSearchResult7
+  usecase ViewMovieDetail7
+  usecase ViewStatistics7
+  usecase StatisticCustomerByRevenue7
+  usecase ViewCustomerTransactionDetail7
+}
+Guest --> RegisterAccount7
+Guest --> SearchMovie7
+User --> Login7
+User --> Logout7
+User --> SearchMovie7
+SearchMovie7 .> EnterKeyword7 : <<include>>
+SearchMovie7 .> ViewSearchResult7 : <<include>>
+ViewMovieDetail7 .> ViewSearchResult7 : <<extend>>
+Manager --> ViewStatistics7
+StatisticCustomerByRevenue7 .> ViewStatistics7 : <<extend>>
+ViewCustomerTransactionDetail7 .> StatisticCustomerByRevenue7 : <<extend>>
+note bottom of ViewSearchResult7 : EnterKeyword7 và ViewSearchResult7\ncùng SearchMovieUI7.jsp.
+note bottom of RegisterAccount7 : Chỉ tạo tài khoản; không phải RegisterMember7.
+note bottom of StatisticCustomerByRevenue7 : Tiền điều kiện: session currentUser và role MANAGER.\nLogin7 dùng chung, không có servlet ManagerLogin7 riêng.
+
+@enduml

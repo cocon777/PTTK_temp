@@ -1,0 +1,66 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Tuần tự — đăng ký tài khoản khách hàng
+
+actor Guest
+participant AuthFilter7 as F
+boundary "RegisterUI7.jsp" as UI
+control AuthServlet7 as S
+entity Customer7 as C
+participant "UserDAOImpl7 : UserDAO7" as DAO
+participant PasswordUtil7 as P
+database MySQL as DB
+Guest -> F : GET /register
+F -> F : tạo session và csrfToken nếu chưa có
+F -> S : doGet
+S -> UI : forward
+UI --> Guest : form + csrfToken
+Guest -> UI : điền thông tin, nhấn Tạo tài khoản
+UI -> F : POST /register + csrfToken
+alt CSRF sai
+  F --> Guest : HTTP 403
+else CSRF đúng
+  F -> S : doPost -> register
+  S -> C : đóng gói thông tin từ form
+  S -> P : isValid(password)
+  P --> S : boolean
+  S -> S : kiểm tra username, họ tên, email, phone,\nngày sinh không tương lai, xác nhận mật khẩu
+  alt dữ liệu sai
+    S -> C : setPassword(null)
+    S -> UI : form (không mật khẩu), message; forward
+  else hợp lệ
+    S -> DAO : registerCustomer(customer)
+    DAO -> P : hash(password) với BCrypt cost 12
+    P --> DAO : hash
+    DAO -> DB : BEGIN; INSERT tblUser7; lấy generated id
+    DAO -> C : setId; setCustomerCode("WEB"+id)
+    DAO -> DB : INSERT tblCustomer7
+    alt trùng username / email hoặc lỗi SQL
+      DAO -> DB : ROLLBACK
+      DAO --> S : SQLException
+      S -> UI : message; giữ thông tin không chứa mật khẩu
+    else thành công
+      DAO -> DB : COMMIT
+      DAO -> C : setPassword(null)
+      DAO --> S : void
+      S --> Guest : redirect /login?registered=1
+    end
+  end
+end
+note over DAO,DB : Không INSERT MemberCard7 / MembershipTier7.\nĐăng ký tài khoản khác với đăng ký thẻ thành viên.
+
+@enduml

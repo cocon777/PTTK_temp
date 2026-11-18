@@ -1,0 +1,157 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title CSDL — bảng và khóa ngoại từ script SQL
+entity tblUser7 {
+  * id : INT <<PK>>
+  * username : VARCHAR(50) <<UNIQUE>>
+  * password : VARCHAR(255)
+  * fullName : VARCHAR(100)
+  phone : VARCHAR(15)
+  email : VARCHAR(255) <<UNIQUE>>
+  * dob : DATE
+}
+entity tblCustomer7 {
+  * customerCode : VARCHAR(20) <<UNIQUE>>
+  * tblUser7id : INT <<PK>>
+}
+entity tblStaff7 {
+  * staffCode : VARCHAR(20) <<UNIQUE>>
+  * `position` : VARCHAR(50)
+  * tblUser7id : INT <<PK>>
+}
+entity tblManager7 {
+  * tblUser7id : INT <<PK>>
+}
+entity tblSalesStaff7 {
+  * tblUser7id : INT <<PK>>
+}
+entity tblMembershipTier7 {
+  * id : INT <<PK>>
+  * tierName : VARCHAR(50) <<UNIQUE>>
+  * minPoint : INT
+  maxPoint : INT
+  * discountPercent : DECIMAL(5,2)
+}
+entity tblMemberCard7 {
+  * id : INT <<PK>>
+  * cardCode : VARCHAR(20) <<UNIQUE>>
+  * issueDate : DATE
+  * loyaltyPoints : INT
+  * tblCustomer7id : INT <<UNIQUE>>
+  * tblMembershipTier7id : INT
+}
+entity tblMovie7 {
+  * id : INT <<PK>>
+  * movieName : VARCHAR(200)
+  * duration : INT
+  director : VARCHAR(100)
+  actors : TEXT
+  description : TEXT
+  poster : VARCHAR(500)
+  trailer : VARCHAR(500)
+  * releaseDate : DATE
+  * language : VARCHAR(30)
+  * ageRating : ENUM('P','K','T13','T16','T18')
+}
+entity tblGenre7 {
+  * id : INT <<PK>>
+  * genreName : VARCHAR(50) <<UNIQUE>>
+  description : VARCHAR(255)
+}
+entity tblMovieGenre7 {
+  * id : INT <<PK>>
+  * tblMovie7id : INT
+  * tblGenre7id : INT
+}
+entity tblRoom7 {
+  * id : INT <<PK>>
+  * roomName : VARCHAR(50) <<UNIQUE>>
+  * capacity : INT
+  description : VARCHAR(255)
+  * bufferMinutes : INT
+}
+entity tblSeatType7 {
+  * id : INT <<PK>>
+  * typeName : VARCHAR(20) <<UNIQUE>>
+  * extraFee : DECIMAL(12,0)
+}
+entity tblSeat7 {
+  * id : INT <<PK>>
+  * seatCode : VARCHAR(10)
+  * tblRoom7id : INT
+  * tblSeatType7id : INT
+}
+entity tblPromotion7 {
+  * id : INT <<PK>>
+  * programName : VARCHAR(100) <<UNIQUE>>
+  * `condition` : VARCHAR(255)
+  * discountValue : DECIMAL(5,2)
+}
+entity tblShowtime7 {
+  * id : INT <<PK>>
+  * startTime : DATETIME
+  * endTimeExpected : DATETIME
+  * ticketPrice : DECIMAL(12,0)
+  * format : ENUM('2D','3D','4DX','IMAX')
+  * tblRoom7id : INT
+  * tblMovie7id : INT
+  tblPromotion7id : INT
+}
+entity tblInvoice7 {
+  * id : INT <<PK>>
+  * invoiceCode : VARCHAR(20) <<UNIQUE>>
+  * transactionTime : DATETIME
+  * paymentMethod : ENUM('Tiền mặt','Thẻ ngân hàng','Ví điện tử','Chuyển khoản')
+  * totalAmount : DECIMAL(12,0)
+  * discountApplied : DECIMAL(5,2)
+  guestName : VARCHAR(100)
+  guestPhone : VARCHAR(15)
+  tblCustomer7id : INT
+  tblSalesStaff7id : INT
+}
+entity tblTicket7 {
+  * id : INT <<PK>>
+  * actualPrice : DECIMAL(12,0)
+  * tblInvoice7id : INT
+  * tblSeat7id : INT
+  * tblShowtime7id : INT
+}
+entity tblInvoiceCounter7 {
+  * counterDate : DATE <<PK>>
+  * lastNumber : INT
+}
+tblUser7 "1" -- "0..1" tblCustomer7 : tblUser7id
+tblUser7 "1" -- "0..1" tblStaff7 : tblUser7id
+tblStaff7 "1" -- "0..1" tblManager7 : tblUser7id
+tblStaff7 "1" -- "0..1" tblSalesStaff7 : tblUser7id
+tblCustomer7 "1" -- "0..1" tblMemberCard7 : tblCustomer7id
+tblMembershipTier7 "1" -- "0..*" tblMemberCard7 : tblMembershipTier7id
+tblMovie7 "1" -- "0..*" tblMovieGenre7 : tblMovie7id
+tblGenre7 "1" -- "0..*" tblMovieGenre7 : tblGenre7id
+tblRoom7 "1" -- "0..*" tblSeat7 : tblRoom7id
+tblSeatType7 "1" -- "0..*" tblSeat7 : tblSeatType7id
+tblRoom7 "1" -- "0..*" tblShowtime7 : tblRoom7id
+tblMovie7 "1" -- "0..*" tblShowtime7 : tblMovie7id
+tblPromotion7 "0..1" -- "0..*" tblShowtime7 : tblPromotion7id
+tblCustomer7 "0..1" -- "0..*" tblInvoice7 : tblCustomer7id
+tblSalesStaff7 "0..1" -- "0..*" tblInvoice7 : tblSalesStaff7id
+tblInvoice7 "1" -- "0..*" tblTicket7 : tblInvoice7id
+tblSeat7 "1" -- "0..*" tblTicket7 : tblSeat7id
+tblShowtime7 "1" -- "0..*" tblTicket7 : tblShowtime7id
+note "tblInvoiceCounter7 là bảng kỹ thuật của trigger cấp invoiceCode.\nKhông có User7.role trong CSDL.\nKhông có bảng thống kê: CustomerStatistic7 được tổng hợp khi truy vấn.\nXem codeMySQL_CSDL.sql cho đầy đủ CHECK, UNIQUE ghép, DEFAULT và trigger." as N
+
+@enduml

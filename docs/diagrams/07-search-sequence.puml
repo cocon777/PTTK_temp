@@ -1,0 +1,78 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Tuần tự thiết kế — tìm kiếm và xem chi tiết
+
+actor Customer
+boundary "CustomerMainUI7.jsp" as Home
+boundary "SearchMovieUI7.jsp" as UI
+control SearchMovieServlet7 as S
+control MovieDetailServlet7 as D
+participant "MovieDAOImpl7 : MovieDAO7" as DAO
+entity Movie7 as M
+database MySQL as DB
+boundary "MovieDetailUI7.jsp" as Detail
+Customer -> Home : Chọn Tìm thông tin phim
+Home -> S : GET /searchMovie
+S -> UI : forward (keyword chưa có)
+UI --> Customer : form + trạng thái chưa tìm
+Customer -> UI : nhập keyword, nhấn Tìm kiếm
+UI -> S : GET /searchMovie?keyword=...
+S -> S : trim; set keyword, searched
+alt rỗng hoặc >200 ký tự
+  S -> UI : message; forward cùng JSP
+else hợp lệ
+  S -> DAO : getMoviesByKeyword(keyword)
+  DAO -> DB : SELECT LIKE ? ESCAPE '!'\nORDER BY releaseDate,id
+  DB --> DAO : ResultSet
+  loop từng phim
+    DAO -> DAO : fillMovie(rs,movie)
+    DAO -> M : set các thuộc tính
+  end
+  loop từng phim
+    DAO -> DAO : loadGenresAndFormats(connection,movie)
+    DAO -> DB : SELECT thể loại; SELECT DISTINCT format
+    DB --> DAO : genres, formats
+    DAO -> M : setMovieGenres; setFormats
+  end
+  DAO --> S : List<Movie7>
+  S -> UI : set listMovie; message nếu rỗng; forward
+end
+UI --> Customer : cùng màn hình, giữ keyword
+opt chọn một phim có trong danh sách
+  Customer -> UI : nhấn tên phim
+  UI -> D : GET /movieDetail?idMovie&keyword
+  D -> M : new Movie7(); setId(idMovie)
+  D -> DAO : getMovieDetail(selected)
+  DAO -> DB : SELECT phim theo id
+  DB --> DAO : ResultSet
+  DAO -> DAO : fillMovie; loadGenresAndFormats
+  DAO -> DB : SELECT genres / formats
+  DB --> DAO : kết quả
+  DAO --> D : Movie7 hoặc null
+  alt không tìm thấy hoặc id sai định dạng
+    D --> Customer : redirect /searchMovie
+  else có phim
+    D -> D : xác thực URL trailer http/https
+    D -> Detail : movie,keyword,trailerUrl; forward
+    Detail --> Customer : thông tin chi tiết
+    Customer -> Detail : Quay lại
+    Detail -> S : GET /searchMovie?keyword=...
+    ref over S,DAO : Thực hiện lại tìm kiếm, trả về SearchMovieUI7.jsp
+  end
+end
+
+@enduml

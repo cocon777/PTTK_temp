@@ -1,0 +1,60 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Hoạt động — đăng ký, đăng nhập, đăng xuất
+
+start
+:Người dùng mở CineMan7;
+if (Chọn Đăng ký?) then (có)
+  :GET /register; hiển thị RegisterUI7.jsp;
+  :Nhập thông tin; POST /register + csrfToken;
+  if (CSRF và dữ liệu hợp lệ?) then (không)
+    :403 nếu CSRF sai;\nhoặc giữ form và báo lỗi nhập liệu;
+    stop
+  endif
+  :BCrypt hash; BEGIN;\nINSERT User + Customer;
+  if (Trùng username/email hoặc lỗi SQL?) then (có)
+    :ROLLBACK; báo lỗi;
+    stop
+  else (không)
+    :COMMIT; redirect /login?registered=1;
+  endif
+endif
+:GET /login; nhập username/password;\nPOST /login + csrfToken;
+if (CSRF hợp lệ?) then (không)
+  :HTTP 403;
+  stop
+endif
+:SELECT user và các bảng vai trò; BCrypt verify;
+if (Thông tin đúng, có vai trò?) then (không)
+  :Thông báo đăng nhập chưa đúng; giữ LoginUI7.jsp;
+  stop
+endif
+:Hủy session cũ; tạo session mới;\nlưu currentUser không có password, role, csrfToken;
+if (MANAGER?) then (có)
+  :Trang quản lý; được mở thống kê;
+else (không)
+  :Trang chủ; truy cập thống kê bị 403;
+endif
+:Nhấn Đăng xuất; POST /logout + csrfToken;
+if (CSRF hợp lệ?) then (có)
+  :invalidate session; redirect /login?loggedOut=1;
+else (không)
+  :HTTP 403; giữ session;
+endif
+stop
+
+@enduml

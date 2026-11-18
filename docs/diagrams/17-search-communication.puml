@@ -1,0 +1,44 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Giao tiếp — tìm kiếm theo cấu trúc MVC hiện tại
+
+allowmixing
+left to right direction
+actor Customer
+object "CustomerMainUI7.jsp" as H
+object "SearchMovieUI7.jsp" as UI
+object "SearchMovieServlet7" as S
+object "MovieDAOImpl7 : MovieDAO7" as DAO
+object "Movie7" as M
+object "MovieDetailServlet7" as D
+object "MovieDetailUI7.jsp" as Detail
+Customer --> H : 1. Chọn tìm phim
+H --> S : 2. GET /searchMovie
+S --> UI : 3. forward ban đầu\n8. forward kết quả / message
+Customer --> UI : 4. Nhập keyword\n9. Chọn phim
+UI --> S : 5. GET keyword
+S --> DAO : 6. getMoviesByKeyword
+DAO --> M : 7. fillMovie; genres/formats
+UI --> D : 10. GET idMovie,keyword
+D --> DAO : 11. getMovieDetail
+DAO --> M : 12. fillMovie; genres/formats
+D --> Detail : 13. forward movie,keyword,trailerUrl
+Detail --> Customer : 14. Xem chi tiết
+Detail --> S : 15. Trở lại: GET keyword cũ
+note "Trình bày các thông điệp chính; alt/loop và lỗi xem biểu đồ tuần tự 07.\nKhông có lời gọi từ JSP vào DAO hoặc nghiệp vụ từ model." as N
+
+@enduml

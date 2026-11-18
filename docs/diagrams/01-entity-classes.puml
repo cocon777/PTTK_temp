@@ -1,0 +1,158 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Lớp thực thể — thuộc tính đúng theo model Java
+class Customer7 {
+  -customerCode : String
+  -memberCard : MemberCard7
+}
+User7 <|-- Customer7
+class CustomerStatistic7 {
+  -totalTickets : int
+  -totalRevenue : float
+  -revenuePercent : float
+  -startDate : Date
+  -endDate : Date
+}
+Customer7 <|-- CustomerStatistic7
+class Genre7 {
+  -id : int
+  -genreName : String
+  -description : String
+}
+class Invoice7 {
+  -id : int
+  -invoiceCode : String
+  -transactionTime : Date
+  -paymentMethod : String
+  -totalAmount : float
+  -discountApplied : float
+  -guestName : String
+  -guestPhone : String
+  -customer : Customer7
+  -salesStaff : SalesStaff7
+  -tickets : List<Ticket7>
+}
+class Manager7 {
+}
+Staff7 <|-- Manager7
+class MemberCard7 {
+  -id : int
+  -cardCode : String
+  -issueDate : Date
+  -loyaltyPoints : int
+  -tier : MembershipTier7
+}
+class MembershipTier7 {
+  -id : int
+  -tierName : String
+  -minPoint : int
+  -maxPoint : Integer
+  -discountPercent : float
+}
+class Movie7 {
+  -id : int
+  -movieName : String
+  -duration : int
+  -director : String
+  -actors : String
+  -description : String
+  -poster : String
+  -trailer : String
+  -releaseDate : Date
+  -language : String
+  -ageRating : String
+  -movieGenres : List<MovieGenre7>
+  -formats : List<String>
+}
+class MovieGenre7 {
+  -id : int
+  -genre : Genre7
+}
+class Promotion7 {
+  -id : int
+  -programName : String
+  -condition : String
+  -discountValue : float
+}
+class Room7 {
+  -id : int
+  -roomName : String
+  -capacity : int
+  -description : String
+  -bufferMinutes : int
+  -seats : List<Seat7>
+}
+class SalesStaff7 {
+}
+Staff7 <|-- SalesStaff7
+class Seat7 {
+  -id : int
+  -seatCode : String
+  -seatType : SeatType7
+}
+class SeatType7 {
+  -id : int
+  -typeName : String
+  -extraFee : float
+}
+class Showtime7 {
+  -id : int
+  -startTime : Date
+  -endTimeExpected : Date
+  -ticketPrice : float
+  -format : String
+  -movie : Movie7
+  -room : Room7
+  -promotion : Promotion7
+}
+abstract class Staff7 {
+  -staffCode : String
+  -position : String
+}
+User7 <|-- Staff7
+class Ticket7 {
+  -id : int
+  -actualPrice : float
+  -showtime : Showtime7
+  -seat : Seat7
+}
+abstract class User7 {
+  -id : int
+  -username : String
+  -password : String
+  -fullName : String
+  -phone : String
+  -email : String
+  -dob : Date
+}
+Customer7 --> "0..1" MemberCard7 : memberCard
+Invoice7 --> "0..1" Customer7 : customer
+Invoice7 --> "0..1" SalesStaff7 : salesStaff
+Invoice7 --> "0..*" Ticket7 : tickets
+MemberCard7 --> "1" MembershipTier7 : tier
+Movie7 --> "0..*" MovieGenre7 : movieGenres
+MovieGenre7 --> "1" Genre7 : genre
+Room7 --> "0..*" Seat7 : seats
+Seat7 --> "1" SeatType7 : seatType
+Showtime7 --> "1" Movie7 : movie
+Showtime7 --> "1" Room7 : room
+Showtime7 --> "0..1" Promotion7 : promotion
+Ticket7 --> "1" Showtime7 : showtime
+Ticket7 --> "0..1" Seat7 : seat
+note "Ẩn constructor, getter/setter và addTicket để dễ đọc.\nKhông có MovieStatistic7 hoặc RevenueStatistic7 trong mã hiện tại.\nformats là List<String> suy ra từ tblShowtime7; không phải cột tblMovie7.\nCác mũi tên thể hiện tham chiếu Java, không thay cho toàn bộ ràng buộc FK." as N
+
+@enduml

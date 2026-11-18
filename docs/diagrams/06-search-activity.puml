@@ -1,0 +1,54 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Hoạt động — form và kết quả cùng SearchMovieUI7.jsp
+
+|Khách hàng|
+start
+:Chọn Tìm thông tin phim;
+|SearchMovieServlet7|
+:GET /searchMovie;
+:forward SearchMovieUI7.jsp (chưa tìm);
+repeat
+  |Khách hàng|
+  :Nhập từ khóa, nhấn Tìm kiếm;
+  |SearchMovieServlet7|
+  :GET /searchMovie?keyword=...;\ntrim và kiểm tra 1..200 ký tự;
+  if (Từ khóa hợp lệ?) then (không)
+    :Đặt keyword, searched, message;\nforward cùng SearchMovieUI7.jsp;
+  else (có)
+    |MovieDAOImpl7|
+    :getMoviesByKeyword(keyword);\nescape !, %, _ trong LIKE;\nfillMovie; loadGenresAndFormats;
+    |SearchMovieServlet7|
+    :Đặt keyword, searched, listMovie;\nmessage nếu không có phim;\nforward SearchMovieUI7.jsp;
+  endif
+  |Khách hàng|
+repeat while (Tiếp tục tìm?) is (có) not (không)
+if (Chọn một phim trong danh sách?) then (có)
+  |MovieDetailServlet7|
+  :GET /movieDetail?idMovie&keyword;
+  :Đóng gói Movie7.id; gọi getMovieDetail;
+  if (Có phim?) then (có)
+    :Kiểm tra scheme http/https cho trailer;\nđặt movie, keyword, trailerUrl;\nforward MovieDetailUI7.jsp;
+    |Khách hàng|
+    :Xem chi tiết / trailer;\nQuay lại tìm kiếm với keyword cũ;
+  else (không)
+    :Redirect /searchMovie;
+  endif
+endif
+stop
+
+@enduml

@@ -1,0 +1,114 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Lớp thiết kế — thống kê khách hàng
+class CustomerRevenueStatServlet7 {
+  -serialVersionUID : long
+  -PAGE_STAT : String
+  -statisticDAO : CustomerStatisticDAO7
+  +init() : void
+  #doPost(HttpServletRequest request, HttpServletResponse response) : void
+  #doGet(HttpServletRequest request, HttpServletResponse response) : void
+  -openPage(HttpServletRequest request, HttpServletResponse response) : void
+  -viewStat(HttpServletRequest request, HttpServletResponse response) : void
+  -parseDate(String value) : LocalDate
+  -sortStat(HttpServletRequest request, HttpServletResponse response) : void
+  -showList(HttpServletRequest request, HttpServletResponse response) : void
+}
+BaseServlet7 <|-- CustomerRevenueStatServlet7
+class CustomerTransactionServlet7 {
+  -serialVersionUID : long
+  -statisticDAO : CustomerStatisticDAO7
+  -invoiceDAO : InvoiceDAO7
+  +init() : void
+  #doGet(HttpServletRequest request, HttpServletResponse response) : void
+  -readCustomerStat(HttpServletRequest request) : CustomerStatistic7
+}
+BaseServlet7 <|-- CustomerTransactionServlet7
+interface CustomerStatisticDAO7 {
+  +getCustomerRevenueStat(CustomerStatistic7 criteria) : List<CustomerStatistic7>
+  +getCustomerInfo(CustomerStatistic7 customerStat) : CustomerStatistic7
+  +sortByRevenue(List<CustomerStatistic7> list, String order) : List<CustomerStatistic7>
+}
+interface InvoiceDAO7 {
+  +getTransactionsByCustomer(CustomerStatistic7 customerStat) : List<Invoice7>
+}
+class CustomerStatisticDAOImpl7 {
+  -SELECT_CUSTOMER_REVENUE : String
+  -SELECT_CUSTOMER_BY_ID : String
+  +getCustomerRevenueStat(CustomerStatistic7 criteria) : List<CustomerStatistic7>
+  +sortByRevenue(List<CustomerStatistic7> list, String order) : List<CustomerStatistic7>
+  +getCustomerInfo(CustomerStatistic7 customerStat) : CustomerStatistic7
+}
+DAO7 <|-- CustomerStatisticDAOImpl7
+CustomerStatisticDAO7 <|.. CustomerStatisticDAOImpl7
+class InvoiceDAOImpl7 {
+  -SELECT_TRANSACTIONS_BY_CUSTOMER : String
+  +getTransactionsByCustomer(CustomerStatistic7 customerStat) : List<Invoice7>
+}
+DAO7 <|-- InvoiceDAOImpl7
+InvoiceDAO7 <|.. InvoiceDAOImpl7
+class CustomerStatistic7 {
+  -totalTickets : int
+  -totalRevenue : float
+  -revenuePercent : float
+  -startDate : Date
+  -endDate : Date
+}
+Customer7 <|-- CustomerStatistic7
+class Invoice7 {
+  -id : int
+  -invoiceCode : String
+  -transactionTime : Date
+  -paymentMethod : String
+  -totalAmount : float
+  -discountApplied : float
+  -guestName : String
+  -guestPhone : String
+  -customer : Customer7
+  -salesStaff : SalesStaff7
+  -tickets : List<Ticket7>
+}
+class "ManagerMainUI7.jsp" as Home <<boundary>>
+class "SelectStatisticUI7.jsp" as Select <<boundary>>
+class "CustomerRevenueStatUI7.jsp" as Stat <<boundary>> {
+  startDate : String (dd/MM/yyyy)
+  endDate : String (dd/MM/yyyy)
+  outMessage : String
+  outsubCustomerRevenueList : Table
+}
+class "CustomerTransactionUI7.jsp" as Detail <<boundary>> {
+  customerStat : CustomerStatistic7 (kèm memberCard.tier)
+  outTransactionList : Table
+}
+class AuthFilter7 <<filter>>
+Home --> Select
+Select --> CustomerRevenueStatServlet7 : GET /statOpen
+Stat --> CustomerRevenueStatServlet7 : POST /statView\nGET /statSort, /statShow
+Stat --> CustomerTransactionServlet7 : GET /customerTransaction\nidCustomer,startDate,endDate,back
+CustomerRevenueStatServlet7 --> Stat : forward
+CustomerTransactionServlet7 --> Detail : forward
+CustomerRevenueStatServlet7 --> CustomerStatisticDAO7
+CustomerTransactionServlet7 --> CustomerStatisticDAO7
+CustomerTransactionServlet7 --> InvoiceDAO7
+CustomerStatisticDAO7 ..> CustomerStatistic7
+InvoiceDAO7 ..> Invoice7
+AuthFilter7 ..> Home : chỉ MANAGER
+AuthFilter7 ..> CustomerRevenueStatServlet7 : chỉ MANAGER
+AuthFilter7 ..> CustomerTransactionServlet7 : chỉ MANAGER
+note "Các DAOImpl kế thừa DAO7; hai Servlet kế thừa BaseServlet7.\nCustomerStatistic7 kế thừa Customer7.\nTên khách là link màu xanh; nhấn dòng cũng mở chi tiết. Vãng lai không mở chi tiết.\nThông báo: request.message -> div#outMessage, cùng kiểu với màn tìm phim.\nForm hiển thị/gửi dd/MM/yyyy; link chi tiết vẫn gửi yyyy-MM-dd." as N
+
+@enduml

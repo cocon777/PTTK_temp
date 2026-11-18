@@ -1,0 +1,48 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Thiết kế gói — đúng cấu trúc thư mục
+
+package view {
+  package customer
+  package manager
+  package auth
+  artifact "head.jsp / header.jsp / footer.jsp" as Shared
+}
+package controller
+package filter
+package dao
+package daoimpl
+package model
+package util
+database "MySQL cineman7" as DB
+view --> controller : URL form / link
+controller --> view : forward
+filter ..> controller : chain + kiểm tra session/CSRF
+controller --> dao : khai báo biến bằng interface
+controller ..> daoimpl : khởi tạo DAOImpl trong init()
+controller --> model
+controller ..> util : PasswordUtil7.isValid
+dao ..> model : tham số / kiểu trả về
+daoimpl ..|> dao : implements
+daoimpl --> model
+daoimpl --> util : hash / verify
+daoimpl --> DB : JDBC / PreparedStatement
+customer ..> Shared
+manager ..> Shared
+auth ..> Shared
+
+@enduml

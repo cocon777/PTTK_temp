@@ -1,0 +1,113 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Lớp thiết kế — tìm kiếm phim
+abstract class BaseServlet7 {
+  -serialVersionUID : long
+  #forward(HttpServletRequest request, HttpServletResponse response, String page) : void
+}
+HttpServlet <|-- BaseServlet7
+class SearchMovieServlet7 {
+  -serialVersionUID : long
+  -movieDAO : MovieDAO7
+  +init() : void
+  #doGet(HttpServletRequest request, HttpServletResponse response) : void
+  #doPost(HttpServletRequest request, HttpServletResponse response) : void
+}
+BaseServlet7 <|-- SearchMovieServlet7
+class MovieDetailServlet7 {
+  -serialVersionUID : long
+  -movieDAO : MovieDAO7
+  +init() : void
+  #doGet(HttpServletRequest request, HttpServletResponse response) : void
+}
+BaseServlet7 <|-- MovieDetailServlet7
+interface MovieDAO7 {
+  +getMoviesByKeyword(String keyword) : List<Movie7>
+  +getMovieDetail(Movie7 movie) : Movie7
+}
+abstract class DAO7 {
+  -jdbcURL : String
+  -jdbcUsername : String
+  -jdbcPassword : String
+  -read(String key, String defaultValue) : String
+  #getConnection() : Connection
+  #printSQLException(SQLException ex) : void
+}
+class MovieDAOImpl7 {
+  -SELECT_MOVIES_BY_KEYWORD : String
+  -SELECT_MOVIE_BY_ID : String
+  -SELECT_GENRES_BY_MOVIE : String
+  -SELECT_FORMATS_BY_MOVIE : String
+  +getMoviesByKeyword(String keyword) : List<Movie7>
+  +getMovieDetail(Movie7 movie) : Movie7
+  -fillMovie(ResultSet rs, Movie7 m) : void
+  -loadGenresAndFormats(Connection connection, Movie7 movie) : void
+}
+DAO7 <|-- MovieDAOImpl7
+MovieDAO7 <|.. MovieDAOImpl7
+class Movie7 {
+  -id : int
+  -movieName : String
+  -duration : int
+  -director : String
+  -actors : String
+  -description : String
+  -poster : String
+  -trailer : String
+  -releaseDate : Date
+  -language : String
+  -ageRating : String
+  -movieGenres : List<MovieGenre7>
+  -formats : List<String>
+}
+class MovieGenre7 {
+  -id : int
+  -genre : Genre7
+}
+class Genre7 {
+  -id : int
+  -genreName : String
+  -description : String
+}
+class "CustomerMainUI7.jsp" as Home <<boundary>>
+class "SearchMovieUI7.jsp" as Search <<boundary>> {
+  keyword : String
+  outsubMovieList : Table
+  outMessage : String
+}
+class "MovieDetailUI7.jsp" as Detail <<boundary>> {
+  outMovieDetail : Table
+  outPoster : Image
+  subBuyTicket : Button
+  subTrailer : Link
+  subBack : Link
+  movie : Movie7 (request attribute)
+}
+Home --> SearchMovieServlet7 : GET /searchMovie
+Search --> SearchMovieServlet7 : GET /searchMovie?keyword=...
+Search --> MovieDetailServlet7 : GET /movieDetail?idMovie&keyword
+SearchMovieServlet7 --> Search : forward (mọi trạng thái)
+MovieDetailServlet7 --> Detail : forward
+Detail --> SearchMovieServlet7 : GET /searchMovie?keyword=...
+SearchMovieServlet7 --> MovieDAO7
+MovieDetailServlet7 --> MovieDAO7
+MovieDAO7 ..> Movie7
+Movie7 --> "0..*" MovieGenre7 : movieGenres
+MovieGenre7 --> Genre7 : genre
+note "Các thành phần JSP là trường giao diện / thuộc tính request, không phải thuộc tính Java.\nTable tương ứng thẻ HTML table với id cùng tên. outMessage là chuỗi request.message\nđược render vào div#outMessage, không phải đối tượng thông báo riêng.\nKhông tồn tại SearchResultUI7.jsp; subBuyTicket chỉ hiện alert ngoài phạm vi module." as N
+
+@enduml

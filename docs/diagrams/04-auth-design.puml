@@ -1,0 +1,72 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Lớp thiết kế — tài khoản và phân quyền
+class AuthServlet7 {
+  -userDAO : UserDAO7
+  +init() : void
+  #doGet(HttpServletRequest request, HttpServletResponse response) : void
+  #doPost(HttpServletRequest request, HttpServletResponse response) : void
+  -login(HttpServletRequest request, HttpServletResponse response) : void
+  -register(HttpServletRequest request, HttpServletResponse response) : void
+  -read(HttpServletRequest request, String name) : String
+  -home(HttpSession session) : String
+}
+BaseServlet7 <|-- AuthServlet7
+class AuthFilter7 {
+  +doFilter(ServletRequest req, ServletResponse res, FilterChain chain) : void
+}
+Filter <|.. AuthFilter7
+interface UserDAO7 {
+  +authenticate(String username, String password) : User7
+  +registerCustomer(Customer7 customer) : void
+}
+class UserDAOImpl7 {
+  -SELECT_USER : String
+  +authenticate(String username, String password) : User7
+  +registerCustomer(Customer7 customer) : void
+}
+DAO7 <|-- UserDAOImpl7
+UserDAO7 <|.. UserDAOImpl7
+class PasswordUtil7 {
+  +isValid(String password) : boolean
+  +hash(String password) : String
+  +verify(String password, String hash) : boolean
+}
+class "LoginUI7.jsp" as Login <<boundary>>
+class "RegisterUI7.jsp" as Register <<boundary>>
+class "header.jsp" as Header <<fragment>>
+abstract class User7
+abstract class Staff7
+class Customer7
+class Manager7
+class SalesStaff7
+User7 <|-- Customer7
+User7 <|-- Staff7
+Staff7 <|-- Manager7
+Staff7 <|-- SalesStaff7
+AuthFilter7 ..> AuthServlet7 : UTF-8, CSRF trước POST
+Login --> AuthServlet7 : GET /login; POST username,password,csrfToken
+Register --> AuthServlet7 : GET /register; POST thông tin,csrfToken
+Header --> AuthServlet7 : POST /logout + csrfToken
+AuthServlet7 --> UserDAO7
+AuthServlet7 ..> PasswordUtil7 : isValid
+UserDAOImpl7 ..> PasswordUtil7 : hash / verify
+UserDAOImpl7 ..> Customer7 : tạo 2 bản ghi trong transaction
+UserDAOImpl7 ..> User7 : authenticate trả lớp con theo bảng
+note "Session: currentUser (không có hash), role, csrfToken, afterLogin.\nVai trò suy từ bảng kế thừa; không thêm cột role vào tblUser7.\nĐăng ký chỉ tạo Customer7; không tự cấp MemberCard7." as N
+
+@enduml

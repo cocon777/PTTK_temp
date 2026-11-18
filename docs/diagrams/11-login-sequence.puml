@@ -1,0 +1,60 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Tuần tự — đăng nhập và xác định vai trò
+
+actor User
+participant AuthFilter7 as F
+boundary "LoginUI7.jsp" as UI
+control AuthServlet7 as S
+participant "UserDAOImpl7 : UserDAO7" as DAO
+participant PasswordUtil7 as P
+database MySQL as DB
+collections HttpSession as Session
+User -> F : GET /login
+F -> F : tạo csrfToken nếu chưa có
+F -> S : doGet
+S -> UI : forward nếu chưa đăng nhập
+UI --> User : form
+User -> UI : nhập username,password
+UI -> F : POST /login + csrfToken
+alt CSRF sai
+  F --> User : HTTP 403
+else hợp lệ
+  F -> S : doPost -> login
+  S -> DAO : authenticate(username,password)
+  DAO -> DB : SELECT User LEFT JOIN Customer, Staff, Manager, SalesStaff
+  DB --> DAO : dòng user hoặc rỗng
+  DAO -> P : verify(password,storedHash) nếu có user
+  P --> DAO : boolean
+  alt sai tài khoản / sai mật khẩu / thiếu vai trò
+    DAO --> S : null
+    S -> UI : message; forward
+  else thành công
+    DAO -> DAO : tạo Manager7 / SalesStaff7 / Customer7;\nđóng gói không có password/hash
+    DAO --> S : User7 (lớp con)
+    S -> Session : đọc afterLogin; invalidate session cũ
+    S -> Session : tạo session mới; currentUser,role,csrfToken mới
+    alt Manager7
+      S --> User : redirect afterLogin nội bộ hoặc ManagerMainUI7.jsp
+    else Customer7 / SalesStaff7
+      S --> User : redirect /
+    end
+  end
+end
+note over S,Session : Đăng nhập lại khi đã có currentUser: redirect về trang tương ứng.\nLỗi SQL/kết nối: HTTP 503 và thông báo chung, không lộ chi tiết CSDL.
+
+@enduml

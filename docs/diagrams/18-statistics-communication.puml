@@ -1,0 +1,44 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Giao tiếp — thống kê theo cấu trúc MVC hiện tại
+
+allowmixing
+left to right direction
+actor Manager
+object "ManagerMainUI7.jsp" as H
+object "SelectStatisticUI7.jsp" as Select
+object "CustomerRevenueStatUI7.jsp" as UI
+object "CustomerRevenueStatServlet7" as S
+object "CustomerStatisticDAOImpl7" as DAO
+object "CustomerTransactionServlet7" as T
+object "InvoiceDAOImpl7" as I
+object "CustomerTransactionUI7.jsp" as Detail
+Manager --> H : 1. Chọn báo cáo
+H --> Select : 2. Mở chọn loại
+Select --> S : 3. GET /statOpen
+S --> UI : 4. forward ngày mặc định\n8. forward kết quả\n11. forward đã sắp xếp
+Manager --> UI : 5. Chọn ngày\n9. Sắp xếp\n12. Chọn khách
+UI --> S : 6. POST /statView + CSRF\n10. GET /statSort\n17. GET /statShow khi quay lại
+S --> DAO : 7. getCustomerRevenueStat\n10.1. sortByRevenue
+UI --> T : 13. GET idCustomer,startDate,endDate,back
+T --> DAO : 14. getCustomerInfo
+T --> I : 15. getTransactionsByCustomer
+T --> Detail : 16. forward chi tiết + tổng
+Detail --> S : 17. Trở lại /statShow
+note "AuthFilter7 kiểm tra MANAGER trước từng request quản lý;\nPOST phải có csrfToken. Chi tiết đầy đủ xem sơ đồ 09." as N
+
+@enduml

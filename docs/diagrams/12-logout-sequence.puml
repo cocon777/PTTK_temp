@@ -1,0 +1,45 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Tuần tự — đăng xuất và bảo vệ báo cáo
+
+actor User
+boundary "header.jsp" as Header
+participant AuthFilter7 as F
+control AuthServlet7 as S
+collections HttpSession as Session
+User -> Header : nhấn Đăng xuất
+Header -> F : POST /logout + csrfToken
+alt CSRF sai
+  F --> User : HTTP 403, session giữ nguyên
+else CSRF đúng
+  F -> S : doPost
+  S -> Session : invalidate() toàn bộ session\n(user, role, tiêu chí, danh sách, token)
+  S --> User : redirect /login?loggedOut=1
+end
+User -> F : GET /statOpen hoặc /view/manager/*.jsp
+F -> Session : kiểm tra currentUser
+alt chưa đăng nhập
+  F -> Session : lưu afterLogin = ManagerMainUI7.jsp
+  F --> User : redirect /login
+else đã đăng nhập nhưng role khác MANAGER
+  F --> User : HTTP 403
+else MANAGER
+  F --> User : cho phép xử lý tiếp
+end
+note over F,S : GET /logout trả HTTP 405; không đăng xuất bằng GET.\nTrang quản lý / tài khoản dùng Cache-Control: no-store.
+
+@enduml

@@ -1,0 +1,100 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam classAttributeIconSize 0
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 95
+skinparam classBackgroundColor #F0F9FF
+skinparam classBorderColor #0284C7
+skinparam ArrowColor #475569
+skinparam participantBackgroundColor #F0F9FF
+skinparam participantBorderColor #0284C7
+hide empty members
+title Tuần tự thiết kế — thống kê và chi tiết giao dịch
+
+actor Manager
+participant AuthFilter7 as F
+boundary "ManagerMainUI7.jsp" as H
+boundary "SelectStatisticUI7.jsp" as Select
+boundary "CustomerRevenueStatUI7.jsp" as UI
+control CustomerRevenueStatServlet7 as S
+participant "CustomerStatisticDAOImpl7 : CustomerStatisticDAO7" as DAO
+collections HttpSession as Session
+database MySQL as DB
+control CustomerTransactionServlet7 as T
+participant "InvoiceDAOImpl7 : InvoiceDAO7" as I
+boundary "CustomerTransactionUI7.jsp" as Detail
+note over F : Trước mỗi REQUEST đến trang / endpoint quản lý:\ncurrentUser tồn tại, role=MANAGER; mọi POST có csrfToken hợp lệ.
+Manager -> H : mở trang quản lý (đã đăng nhập)
+H -> Select : chọn Xem báo cáo thống kê
+Manager -> Select : chọn Khách hàng theo doanh thu
+Select -> F : GET /statOpen
+F -> S : chain.doFilter
+S -> S : openPage()
+S -> Session : remove listStat, criteria, sortOrder
+S -> UI : forward với criteria mặc định (Asia/Ho_Chi_Minh)
+UI --> Manager : form ngày trên cùng trang
+Manager -> UI : chọn ngày, nhấn Xem thống kê
+UI -> F : POST /statView startDate,endDate (dd/MM/yyyy),csrfToken
+F -> S : chain.doFilter
+S -> S : doPost -> doGet -> viewStat(); parseDate()
+alt ngày sai định dạng
+  S -> S : message; openPage()
+  S -> UI : forward, giữ startInput/endInput;\nmessage là String, không có danh sách
+else end < start
+  S -> UI : message + criteria; forward, không truy vấn
+else khoảng hợp lệ (bao gồm cùng ngày)
+  S -> DAO : getCustomerRevenueStat(criteria)
+  DAO -> DB : tổng vé / doanh thu theo customer\n[start, end + 1 ngày)
+  DB --> DAO : rows (cid null = vãng lai)
+  DAO -> DAO : đóng gói CustomerStatistic7; tính tỷ trọng;\ngộp vãng lai cuối danh sách nếu có dữ liệu
+  DAO --> S : List<CustomerStatistic7>
+  S -> Session : listStat, criteria, sortOrder=desc
+  S -> S : showList(); tính sumTickets, sumRevenue
+  S -> UI : forward listStat, criteria, sortOrder, tổng
+  UI --> Manager : kết quả và Tổng cộng
+end
+opt sắp xếp
+  Manager -> UI : nhấn Tổng doanh thu
+  UI -> F : GET /statSort
+  F -> S : chain.doFilter
+  S -> S : sortStat(); đảo hướng
+  S -> Session : lấy listStat, sortOrder
+  S -> DAO : sortByRevenue(list,order)
+  DAO --> S : danh sách mới, vãng lai ở cuối
+  S -> Session : cập nhật listStat, sortOrder
+  S -> S : showList()
+  S -> UI : forward cùng JSP
+end
+opt nhấn dòng khách hàng
+  Manager -> UI : xem giao dịch khách có tài khoản
+  UI -> F : GET /customerTransaction\nidCustomer,startDate,endDate,back=/statShow
+  F -> T : chain.doFilter
+  T -> T : readCustomerStat(request)
+  T -> DAO : getCustomerInfo(customerStat)
+  DAO -> DB : SELECT họ tên, mã KH, hạng thành viên theo id\nLEFT JOIN MemberCard + MembershipTier
+  DB --> DAO : customer
+  DAO --> T : CustomerStatistic7 hoặc null
+  alt không có khách / id sai / ngày thiếu hoặc sai
+    T --> Manager : redirect /
+  else hợp lệ
+    T -> I : getTransactionsByCustomer(customerStat)
+    I -> DB : SELECT Invoice + Ticket + Showtime + Room + Movie
+    DB --> I : ResultSet theo ngày, invoice, ticket
+    I --> T : List<Invoice7> kèm tickets
+    T -> T : tính sumTickets, sumAmount;\nchỉ chấp nhận back=/statShow, còn lại /statOpen
+    T -> Detail : forward customerStat,listInvoice,tổng,backUrl
+    Detail --> Manager : tên + hạng thành viên, giao dịch + Tổng cộng
+    Manager -> Detail : Quay lại
+    Detail -> F : GET /statShow
+    F -> S : chain.doFilter
+    S -> S : showList() từ session
+    S -> UI : forward kết quả cũ
+  end
+end
+
+@enduml
